@@ -61,7 +61,6 @@ def register_agent(data: AgentRegister):
     AGENTS[api_key] = agent
     return {"id": agent_id, "api_key": api_key, "message": "Registered successfully"}
 
-@get_current_agent
 @app.get("/agents")
 def list_agents(agent=Depends(get_current_agent)):
     return list(AGENTS.values())
