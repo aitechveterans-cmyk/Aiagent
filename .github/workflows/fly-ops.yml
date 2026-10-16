@@ -1,0 +1,25 @@
+name: Fly ops (phone-friendly deploy)
+
+# Run manually from the Actions tab. Does the three flyctl steps that need a
+# terminal: scale to one machine, create the data volume if missing, then
+# deploy a fresh build from this repo.
+on:
+  workflow_dispatch:
+
+jobs:
+  ops:
+    runs-on: ubuntu-latest
+    env:
+      FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: superfly/flyctl-actions/setup-flyctl@master
+
+      - name: Scale to one machine
+        run: flyctl scale count 1 -a aiagent-be1d4q
+
+      - name: Create data volume (skips if it exists)
+        run: flyctl volumes create hub_data -r dfw --size 1 -a aiagent-be1d4q || echo "volume already exists, continuing"
+
+      - name: Deploy fresh build
+        run: flyctl deploy -a aiagent-be1d4q
