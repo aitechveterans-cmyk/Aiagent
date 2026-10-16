@@ -16,7 +16,7 @@ jobs:
       - uses: superfly/flyctl-actions/setup-flyctl@master
 
       - name: Scale to one machine
-        run: flyctl scale count 1 -a aiagent-be1d4q
+        run: flyctl scale count 1 -y -a aiagent-be1d4q
 
       - name: Create data volume (skips if it exists)
         run: flyctl volumes create hub_data -r dfw --size 1 -a aiagent-be1d4q || echo "volume already exists, continuing"
