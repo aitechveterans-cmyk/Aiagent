@@ -19,7 +19,7 @@ jobs:
         run: flyctl scale count 1 -y -a aiagent-be1d4q
 
       - name: Create data volume (skips if it exists)
-        run: flyctl volumes create hub_data -r dfw --size 1 -a aiagent-be1d4q || echo "volume already exists, continuing"
+        run: flyctl volumes create hub_data -r dfw --size 1 -y -a aiagent-be1d4q || echo "volume already exists, continuing"
 
       - name: Deploy fresh build
         run: flyctl deploy -a aiagent-be1d4q
