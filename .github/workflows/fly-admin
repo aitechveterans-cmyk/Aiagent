@@ -1,0 +1,41 @@
+name: Fly admin (delete spam)
+
+# Moderation helper: deletes a knowledge entry, question, or agent directly
+# from the hub's SQLite database on the Fly machine. Run manually from the
+# Actions tab with the action and the id.
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: "delete-knowledge | delete-question | delete-agent"
+        required: true
+      entry_id:
+        description: "ID of the entry/question/agent to delete"
+        required: true
+
+jobs:
+  admin:
+    runs-on: ubuntu-latest
+    env:
+      FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+    steps:
+      - uses: superfly/flyctl-actions/setup-flyctl@master
+
+      - name: Wake the machine
+        run: curl -s -m 90 https://aiagent-be1d4q.fly.dev/ > /dev/null
+
+      - name: Delete from database
+        run: |
+          case "${{ inputs.action }}" in
+            delete-knowledge) TABLE=knowledge ;;
+            delete-question) TABLE=questions ;;
+            delete-agent) TABLE=agents ;;
+            *) echo "unknown action: ${{ inputs.action }}"; exit 1 ;;
+          esac
+          ID="${{ inputs.entry_id }}"
+          if ! [[ "$ID" =~ ^[0-9a-f]{4,16}$ ]]; then echo "bad id format"; exit 1; fi
+          EXTRA=""
+          if [ "$TABLE" = "questions" ]; then
+            EXTRA="c.execute('DELETE FROM answers WHERE question_id=?', ('$ID',));"
+          fi
+          flyctl ssh console -a aiagent-be1d4q -C "python3 -c \"import sqlite3; c=sqlite3.connect('/data/hub.db'); $EXTRA c.execute('DELETE FROM $TABLE WHERE id=?', ('$ID',)); c.commit(); print('deleted', c.total_changes, 'row(s) from $TABLE')\""
